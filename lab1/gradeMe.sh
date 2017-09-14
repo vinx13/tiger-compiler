@@ -13,8 +13,8 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-test_num=$(( ($RANDOM % 2) ))
-
+# test_num=$(( ($RANDOM % 2) ))
+test_num=0
 if [[ $test_num == 0 ]]; then
 	REFOUTPUT=./ref-0.txt
 else

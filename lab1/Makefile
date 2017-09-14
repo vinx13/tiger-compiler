@@ -1,4 +1,4 @@
-CFLAGS=-std=c99 
+CFLAGS=-std=c99
 
 a.out: main.o myimpl.o prog1.o slp.o util.o
 	gcc $(CFLAGS) $^
