@@ -109,7 +109,7 @@ else
 			fi
 
 			# normal case
-			icdiff $DIFFOPTION _tmp.txt $REFOUTDIR/${tfileName%.*}.out >& .tmp.txt
+			diff $DIFFOPTION _tmp.txt $REFOUTDIR/${tfileName%.*}.out >& .tmp.txt
 			if [ -s .tmp.txt ]; then
 				cat .tmp.txt
 				echo -e "${BLUE_COLOR}[*_*]$ite: Output Mismatch [$tfileName]${RES}"
