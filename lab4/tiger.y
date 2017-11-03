@@ -104,6 +104,7 @@ exp: lvalue { $$ = A_VarExp(EM_tokPos, $1); }
    | MINUS exp %prec UMINUS   {$$ = A_OpExp(EM_tokPos, A_minusOp, A_IntExp(EM_tokPos, 0), $2); }
    | ID LBRACE rec RBRACE { $$ = A_RecordExp(EM_tokPos, S_Symbol($1), $3); }
    | ID LBRACE RBRACE { $$ = A_RecordExp(EM_tokPos, S_Symbol($1), NULL); }
+   | LPAREN RPAREN { $$ = A_SeqExp(EM_tokPos, NULL); }
    | LPAREN sequencing RPAREN { $$ = A_SeqExp(EM_tokPos, $2); }
    | lvalue ASSIGN exp { $$ = A_AssignExp(EM_tokPos, $1, $3); }
    | IF exp THEN exp { $$ = A_IfExp(EM_tokPos, $2, $4, NULL); }
