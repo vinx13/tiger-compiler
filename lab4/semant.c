@@ -31,7 +31,8 @@ Ty_ty actual_ty(Ty_ty ty) {
 
 int Ty_hasCycle(Ty_ty ty) {
     if (ty->kind != Ty_name) return FALSE;
-    for (Ty_ty cur = ty->u.name.ty; cur->kind == Ty_name && cur->u.name.ty /* named type may be incomplete */; cur = cur->u.name.ty) {
+    Ty_ty cur;
+    for (cur = ty->u.name.ty; cur->kind == Ty_name && cur->u.name.ty /* named type may be incomplete */; cur = cur->u.name.ty) {
         if (cur == ty) return TRUE;
     }
     return FALSE;
