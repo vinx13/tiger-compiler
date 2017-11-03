@@ -292,7 +292,7 @@ expty transAssignExp(S_table venv, S_table tenv, A_exp a) {
     expty var_meta = transVar(venv, tenv, a->u.assign.var),
           exp_meta = transExp(venv, tenv, a->u.assign.exp);
     if (!Ty_isSame(var_meta.ty, exp_meta.ty)) {
-        EM_error(a->pos, "unmarched assign exp");
+        EM_error(a->pos, "unmatched assign exp");
     }
 
     return expTy(NULL, var_meta.ty);
