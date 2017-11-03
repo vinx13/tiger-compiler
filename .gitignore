@@ -1,6 +1,12 @@
 .idea
+*.zip
+*.pdf
 *.o
 *.out
 *.swp
 *.tar
 *.gz
+lextest
+*.yy.c
+y.output
+y.tab.*

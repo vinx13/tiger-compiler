@@ -75,8 +75,8 @@ char *getstr(const char *str)
     --comment_level;
     if (comment_level == 0) BEGIN 0;
     else if (comment_level < 0) {
-        // error
         comment_level = 0;
+        REJECT;
     }
 }
 
@@ -101,7 +101,7 @@ to { adjust(); return TO; }
 for { adjust(); return FOR; }
 \"[\-\+\*\/\.\\a-zA-Z0-9\ \t]*\" { adjust(); yylval.sval = getstr(yytext); return STRING; }
 [0-9]* { adjust(); yylval.ival = atoi(yytext); return INT; }
-[_a-zA-Z][_0-9a-zA-Z]* { adjust(); yylval.sval = yytext; return ID; }
+[_a-zA-Z][_0-9a-zA-Z]* { adjust(); yylval.sval = String(yytext); return ID; }
 "<=" { adjust(); return LE; }
 "<" { adjust(); return LT; }
 ">=" { adjust(); return GE; }
@@ -127,5 +127,5 @@ for { adjust(); return FOR; }
 "|" { adjust(); return OR; }
 "[" { adjust(); return LBRACK; }
 "]" { adjust(); return RBRACK; }
-
+<<EOF>> { adjust(); yyterminate(); }
 . { adjust(); }
