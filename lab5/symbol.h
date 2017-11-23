@@ -30,6 +30,8 @@ void S_enter(S_table t, S_symbol sym, void *value);
  *    if sym is unbound. */
 void *S_look(S_table t, S_symbol sym);
 
+void *S_lookInScope(S_table t, S_symbol sym);
+
 /* Start a new "scope" in "t".  Scopes are nested. */
 void S_beginScope(S_table t);
 

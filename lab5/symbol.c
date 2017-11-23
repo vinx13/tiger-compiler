@@ -59,6 +59,10 @@ void *S_look(S_table t, S_symbol sym) {
 
 static struct S_symbol_ marksym = {"<mark>",0};
 
+void *S_lookInScope(S_table t, S_symbol sym) {
+  return TAB_lookUntil(t, sym, &marksym);
+}
+
 void S_beginScope(S_table t)
 { S_enter(t,&marksym,NULL);
 }
