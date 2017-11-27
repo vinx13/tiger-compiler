@@ -90,7 +90,8 @@ S_table E_base_venv(void)
 	formals->head = Ty_String();
 	formals->tail = NULL;
 
-	S_enter(venv,S_Symbol("print"),E_FunEntry(level,label,formals,NULL));
+    result = Ty_Void();
+	S_enter(venv,S_Symbol("print"),E_FunEntry(level,label,formals,result));
 
 	result = Ty_Int();
 	S_enter(venv,S_Symbol("ord"),E_FunEntry(level,label,formals,result));

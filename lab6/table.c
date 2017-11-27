@@ -50,16 +50,38 @@ void TAB_enter(TAB_table t, void *key, void *value)
  t->top = key;
 }
 
-void *TAB_look(TAB_table t, void *key)
-{int index;
- binder b;
- assert(t && key);
- index=((unsigned long)key) % TABSIZE;
- for(b=t->table[index]; b; b=b->next)
-   if (b->key==key) return b->value;
- return NULL;
+static binder _TAB_lookBinder(TAB_table t, void *key) {
+  int index;
+  binder b;
+  assert(t && key);
+  index=((unsigned long)key) % TABSIZE;
+  for(b=t->table[index]; b; b=b->next) {
+    if (b->key==key) return b;
+  }
+   return NULL;
 }
 
+void *TAB_look(TAB_table t, void *key) {
+  binder b = _TAB_lookBinder(t, key);
+  if (b) return b->value;
+  return NULL;
+}
+
+void *TAB_lookUntil(TAB_table t, void *key, void *until) {
+  void *k; 
+  binder b;
+  int index;
+  assert (t);
+  k = t->top;
+  while (k && k != until) {
+    b = _TAB_lookBinder(t, k);
+    if (b->key == key) return b->value;
+    k = b->prevtop;
+  }
+  
+  return NULL;
+}
+    
 void *TAB_pop(TAB_table t) {
   void *k; binder b; int index;
   assert (t);
@@ -72,6 +94,7 @@ void *TAB_pop(TAB_table t) {
   t->top=b->prevtop;
   return b->key;
 }
+
 
 void TAB_dump(TAB_table t, void (*show)(void *key, void *value)) {
   void *k = t->top;
@@ -86,3 +109,4 @@ void TAB_dump(TAB_table t, void (*show)(void *key, void *value)) {
   t->top=k;
   t->table[index]=b;
 }
+
