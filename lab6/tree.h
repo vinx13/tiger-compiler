@@ -19,7 +19,7 @@ typedef enum  {T_eq, T_ne, T_lt, T_gt, T_le, T_ge,
 		T_ult, T_ule, T_ugt, T_uge} T_relOp;
 
 struct T_stm_ {enum {T_SEQ, T_LABEL, T_JUMP, T_CJUMP, T_MOVE,
-		       T_EXP} kind;
+		       T_EXP, T_NOP} kind;
 	       union {struct {T_stm left, right;} SEQ;
 		      Temp_label LABEL;
 		      struct {T_exp exp; Temp_labelList jumps;} JUMP;
@@ -60,6 +60,7 @@ T_exp T_Eseq(T_stm, T_exp);
 T_exp T_Name(Temp_label);
 T_exp T_Const(int);
 T_exp T_Call(T_exp, T_expList);
+T_stm T_Nop();
 
 T_relOp T_notRel(T_relOp);  /* a op b    ==     not(a notRel(op) b)  */
 T_relOp T_commute(T_relOp); /* a op b    ==    b commute(op) a       */

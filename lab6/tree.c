@@ -24,11 +24,12 @@ T_stm T_Seq(T_stm left, T_stm right)
  return p;
 }
 
-T_stm T_Label(Temp_label label)
-{T_stm p = (T_stm) checked_malloc(sizeof *p);
- p->kind=T_LABEL;
- p->u.LABEL=label;
- return p;
+T_stm T_Label(Temp_label label) {
+    assert(label);
+    T_stm p = (T_stm) checked_malloc(sizeof *p);
+    p->kind=T_LABEL;
+    p->u.LABEL=label;
+    return p;
 }
  
 T_stm T_Jump(T_exp exp, Temp_labelList labels)
@@ -40,15 +41,21 @@ T_stm T_Jump(T_exp exp, Temp_labelList labels)
 }
 
 T_stm T_Cjump(T_relOp op, T_exp left, T_exp right, 
-	      Temp_label true, Temp_label false)
-{T_stm p = (T_stm) checked_malloc(sizeof *p);
- p->kind=T_CJUMP;
- p->u.CJUMP.op=op; p->u.CJUMP.left=left; p->u.CJUMP.right=right;
- p->u.CJUMP.true=true;
- p->u.CJUMP.false=false;
- return p;
+	      Temp_label true, Temp_label false) {   
+    T_stm p = (T_stm) checked_malloc(sizeof *p);
+    p->kind=T_CJUMP;
+    p->u.CJUMP.op=op; p->u.CJUMP.left=left; p->u.CJUMP.right=right;
+    p->u.CJUMP.true=true;
+    p->u.CJUMP.false=false;
+    return p;
 }
  
+T_stm T_Nop() {
+    T_stm p = (T_stm) checked_malloc(sizeof(*p));
+    p->kind = T_NOP;
+    return p;
+}
+
 T_stm T_Move(T_exp dst, T_exp src)
 {T_stm p = (T_stm) checked_malloc(sizeof *p);
  p->kind=T_MOVE;

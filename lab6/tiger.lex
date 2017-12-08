@@ -101,7 +101,7 @@ of { adjust(); return OF; }
 array { adjust(); return ARRAY; }
 to { adjust(); return TO; }
 for { adjust(); return FOR; }
-\"[\-\+\*\/\.\\a-zA-Z0-9\ \t]*\" { adjust(); yylval.sval = getstr(yytext); return STRING; }
+\"[\-\+\*\/\.\\!:=\?><a-zA-Z0-9\ \t]*\" { adjust(); yylval.sval = getstr(yytext); return STRING; }
 [0-9]* { adjust(); yylval.ival = atoi(yytext); return INT; }
 [_a-zA-Z][_0-9a-zA-Z]* { adjust(); yylval.sval = String(yytext); return ID; }
 "<=" { adjust(); return LE; }

@@ -40,6 +40,8 @@ struct AS_proc_ {
 
 AS_proc AS_Proc(string p, AS_instrList b, string e);
 
+Temp_tempList AS_use(AS_instr);
+Temp_tempList AS_def(AS_instr);
 
 //TA's implementation. Just for reference.
 //void AS_rewrite(AS_instrList iList, Temp_map m);

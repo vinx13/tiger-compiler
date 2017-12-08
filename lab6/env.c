@@ -31,7 +31,7 @@ E_enventry E_FunEntry(Tr_level level, Temp_label label, Ty_tyList formals, Ty_ty
 	entry->u.fun.level = level;
 	entry->u.fun.label = label;
 	entry->u.fun.formals = formals;
-	entry->u.fun.result = result;
+	entry->u.fun.result = result ? result : Ty_Void();
 	return entry;
 }
 
@@ -56,63 +56,27 @@ S_table E_base_tenv(void)
 	return table;
 }
 
+
+void declareFunc(S_table env, string name, Ty_tyList formals, Ty_ty result) {
+    S_enter(env, S_Symbol(name), E_FunEntry(Tr_outermost(), Temp_namedlabel(name), formals, result));
+}
+
 S_table E_base_venv(void)
 {
-	S_table venv;
-
-	Ty_ty result;
+	S_table venv = S_empty();
 	Ty_tyList formals;
 	
-	Temp_label label = NULL;
-	Tr_level level;
-	
-	level = Tr_outermost();
-	venv = S_empty();
-
-	S_enter(venv,S_Symbol("flush"),E_FunEntry(level,label,NULL,NULL));
-	
-	result = Ty_Int();
-
-	formals = checked_malloc(sizeof(*formals));
-	formals->head = Ty_Int();
-	formals->tail = NULL;
-	S_enter(venv,S_Symbol("exit"),E_FunEntry(level,label,formals,NULL));
-
-	S_enter(venv,S_Symbol("not"),E_FunEntry(level,label,formals,result));
-
-	result = Ty_String();
-	
-	S_enter(venv,S_Symbol("chr"),E_FunEntry(level,label,formals,result));
-
-	S_enter(venv,S_Symbol("getchar"),E_FunEntry(level,label,NULL,result));
-
-	formals = checked_malloc(sizeof(*formals));
-	formals->head = Ty_String();
-	formals->tail = NULL;
-
-    result = Ty_Void();
-	S_enter(venv,S_Symbol("print"),E_FunEntry(level,label,formals,result));
-
-	result = Ty_Int();
-	S_enter(venv,S_Symbol("ord"),E_FunEntry(level,label,formals,result));
-
-	S_enter(venv,S_Symbol("size"),E_FunEntry(level,label,formals,result));
-
-	result = Ty_String();
-	formals = checked_malloc(sizeof(*formals));
-	formals->head = Ty_String();
-	formals->tail = checked_malloc(sizeof(*formals));
-	formals->tail->head = Ty_String();
-	S_enter(venv,S_Symbol("concat"),E_FunEntry(level,label,formals,result));
-
-	formals = checked_malloc(sizeof(*formals));
-	formals->head = Ty_String();
-	formals->tail = checked_malloc(sizeof(*formals));
-	formals->tail->head = Ty_Int();
-	formals->tail->tail = checked_malloc(sizeof(*formals));
-	formals->tail->tail->head = Ty_Int();
-	S_enter(venv,S_Symbol("substring"),E_FunEntry(level,label,formals,result));
-
+    declareFunc(venv, "flush", NULL, Ty_Void());
+    declareFunc(venv, "exit", Ty_TyList(Ty_Int(), NULL), Ty_Void());	
+    declareFunc(venv, "not", Ty_TyList(Ty_Int(), NULL), Ty_Int());
+    declareFunc(venv, "printi", Ty_TyList(Ty_Int(), NULL), Ty_Void());
+    declareFunc(venv, "chr", Ty_TyList(Ty_Int(), NULL), Ty_String());
+    declareFunc(venv, "getchar", NULL, Ty_String());
+    declareFunc(venv, "print", Ty_TyList(Ty_String(), NULL), Ty_Void());
+    declareFunc(venv, "ord", Ty_TyList(Ty_String(), NULL), Ty_Int());
+    declareFunc(venv, "size", Ty_TyList(Ty_String(), NULL), Ty_Int());
+	declareFunc(venv, "concat", Ty_TyList(Ty_String(), Ty_TyList(Ty_String(), NULL)), Ty_String());
+	declareFunc(venv, "substring", Ty_TyList(Ty_String(), Ty_TyList(Ty_Int(), Ty_TyList(Ty_Int(), NULL))), Ty_String());
 
 	return venv;
 }

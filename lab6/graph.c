@@ -60,11 +60,37 @@ G_node G_Node(G_graph g, void *info)
  return n;
 }
 
+int G_nodeKey(G_node n) {
+    return n->mykey;
+}
+
 G_nodeList G_nodes(G_graph g)
 {
   assert(g);
   return g->mynodes;
 } 
+
+G_nodeList G_nodeListClone(G_nodeList nodes) {
+    if (!nodes) return NULL;
+    G_nodeList result = G_NodeList(nodes->head, NULL), cur = result;
+    for(nodes = nodes->tail; nodes; nodes = nodes->tail) {
+        cur = cur->tail = G_NodeList(nodes->head, NULL);
+    }
+    return result;
+}
+
+G_nodeList G_rnodes(G_graph g) {
+	assert(g);
+	if (!g->mynodes) return NULL;
+	G_nodeList nodes = G_nodes(g);
+	G_nodeList rnodes = G_NodeList(nodes->head, NULL);
+	for(nodes = nodes->tail; nodes; nodes = nodes->tail) {
+		rnodes = G_NodeList(nodes->head, rnodes);
+	}
+	
+	return rnodes;
+}
+
 
 /* return true if a is in l list */
 bool G_inNodeList(G_node a, G_nodeList l) {

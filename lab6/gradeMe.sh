@@ -32,6 +32,7 @@ fi
 	do		
 		if [ ${tcase##*.} = "tig" ]; then
 			tfileName=${tcase##*/}
+            #echo $tfileName
 			./$BIN $TESTCASEDIR/$tfileName &>/dev/null
 			gcc -Wl,--wrap,getchar -m32 $TESTCASEDIR/${tfileName}.s runtime.c -o test.out &>/dev/null
 			if [ ! -s test.out ]; then
@@ -43,7 +44,7 @@ fi
 			fi
 
 			if [ $tfileName = "merge.tig" ]; then 
-				result=0
+                result=0
 				count=1
 				for mergecase in `ls $MERGECASEDIR` 
 				do

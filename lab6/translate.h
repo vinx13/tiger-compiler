@@ -30,7 +30,7 @@ Tr_expList Tr_ExpList(Tr_exp head, Tr_expList tail);
 
 Tr_level Tr_outermost(void);
 
-Tr_level Tr_newLevel(Tr_level parent, Temp_label name, U_boolList formals);
+Tr_level Tr_newLevel(Tr_level parent, Temp_label label, U_boolList formals);
 
 Tr_accessList Tr_formals(Tr_level level);
 
@@ -50,24 +50,33 @@ Tr_exp Tr_intExp(int);
 
 Tr_exp Tr_recordExp(Tr_expList);
 
+Tr_exp Tr_arrayExp(Tr_exp size, Tr_exp init);
+
+Tr_exp Tr_stringCompare(A_oper, Tr_exp, Tr_exp);
+
 Tr_exp Tr_opExp(A_oper, Tr_exp, Tr_exp);
 
 Tr_exp Tr_arrayExp(Tr_exp size, Tr_exp init);
 
 Tr_exp Tr_ifExp(Tr_exp, Tr_exp, Tr_exp);
 
-Tr_exp Tr_forExp(Tr_exp, Tr_exp, Tr_exp, Tr_exp);
+Tr_exp Tr_forExp(Tr_exp, Tr_exp, Tr_exp, Tr_exp, Temp_label done);
 
-Tr_exp Tr_whileExp(Tr_exp, Tr_exp);
+Tr_exp Tr_whileExp(Tr_exp, Tr_exp, Temp_label done);
 
-void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals);
+void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals, bool isProc);
 
 Tr_exp Tr_stringExp(string);
 
-Tr_exp Tr_seqExp(Tr_expList);
+Tr_exp Tr_seqExp(Tr_expList, bool);
 
 Tr_exp Tr_assignExp(Tr_exp, Tr_exp);
 
+Tr_exp Tr_breakExp(Temp_label done);
+
+Tr_exp Tr_callExp(Temp_label, Tr_expList, Tr_level, Tr_level);
+
+Tr_exp Tr_letExp(Tr_expList, Tr_exp);
 
 Tr_exp Tr_Nop();
 

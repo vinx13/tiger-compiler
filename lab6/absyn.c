@@ -139,7 +139,7 @@ A_exp A_ForExp(A_pos pos, S_symbol var, A_exp lo, A_exp hi, A_exp body)
  p->u.forr.lo=lo;
  p->u.forr.hi=hi;
  p->u.forr.body=body;
- p->u.forr.escape=TRUE;
+ p->u.forr.escape=FALSE;
  return p;
 }
 
@@ -184,7 +184,7 @@ A_dec A_VarDec(A_pos pos, S_symbol var, S_symbol typ, A_exp init)
  p->u.var.var=var;
  p->u.var.typ=typ;
  p->u.var.init=init;
- p->u.var.escape=TRUE;
+ p->u.var.escape=FALSE;
  return p;
 }
 
@@ -225,7 +225,7 @@ A_field A_Field(A_pos pos, S_symbol name, S_symbol typ)
  p->pos=pos;
  p->name=name;
  p->typ=typ;
- p->escape=TRUE;
+ p->escape=FALSE;
  return p;
 }
 

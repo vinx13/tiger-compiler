@@ -19,8 +19,11 @@ G_node G_Node(G_graph g, void *info);
 /* Make a NodeList cell */
 G_nodeList G_NodeList(G_node head, G_nodeList tail);
 
+int G_nodeKey(G_node n);
 /* Get the list of nodes belonging to "g" */
 G_nodeList G_nodes(G_graph g);
+G_nodeList G_rnodes(G_graph g);
+G_nodeList G_nodeListClone(G_nodeList l);
 
 /* Tell if "a" is in the list "l" */
 bool G_inNodeList(G_node a, G_nodeList l);

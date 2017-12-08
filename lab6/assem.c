@@ -15,6 +15,12 @@
 #include "frame.h"
 #include "errormsg.h"
 
+static string strclone(string s) {
+    string r = (string) checked_malloc(strlen(s)+1);
+    strcpy(r, s);
+    return r;
+}
+
 AS_targets AS_Targets(Temp_labelList labels) {
    AS_targets p = checked_malloc (sizeof *p);
    p->labels=labels;
@@ -24,7 +30,7 @@ AS_targets AS_Targets(Temp_labelList labels) {
 AS_instr AS_Oper(string a, Temp_tempList d, Temp_tempList s, AS_targets j) {
   AS_instr p = (AS_instr) checked_malloc (sizeof *p);
   p->kind = I_OPER;
-  p->u.OPER.assem=a; 
+  p->u.OPER.assem= strclone(a);
   p->u.OPER.dst=d; 
   p->u.OPER.src=s; 
   p->u.OPER.jumps=j;
@@ -34,7 +40,7 @@ AS_instr AS_Oper(string a, Temp_tempList d, Temp_tempList s, AS_targets j) {
 AS_instr AS_Label(string a, Temp_label label) {
   AS_instr p = (AS_instr) checked_malloc (sizeof *p);
   p->kind = I_LABEL;
-  p->u.LABEL.assem=a; 
+  p->u.LABEL.assem=strclone(a);
   p->u.LABEL.label=label; 
   return p;
 }
@@ -42,7 +48,7 @@ AS_instr AS_Label(string a, Temp_label label) {
 AS_instr AS_Move(string a, Temp_tempList d, Temp_tempList s) {
   AS_instr p = (AS_instr) checked_malloc (sizeof *p);
   p->kind = I_MOVE;
-  p->u.MOVE.assem=a; 
+  p->u.MOVE.assem=strclone(a);
   p->u.MOVE.dst=d; 
   p->u.MOVE.src=s; 
   return p;
@@ -124,11 +130,9 @@ void AS_print(FILE *out, AS_instr i, Temp_map m)
   switch (i->kind) {
   case I_OPER:
     format(r, i->u.OPER.assem, i->u.OPER.dst, i->u.OPER.src, i->u.OPER.jumps, m);
-    fprintf(out, "%s\n", r);
     break;
   case I_LABEL:
     format(r, i->u.LABEL.assem, NULL, NULL, NULL, m); 
-    fprintf(out, "%s:\n", r); 
     /* i->u.LABEL->label); */
     break;
   case I_MOVE: {
@@ -138,15 +142,16 @@ void AS_print(FILE *out, AS_instr i, Temp_map m)
 			char *dst = strchr(src + 1, '%');
 			if (dst != NULL) {
 				//fprintf(out, "src: %s; dst: %s\n", src, dst);
-				if ((src[1] == dst[1]) && (src[2] == dst[2]) && (src[3] == dst[3])) break;
+				if ((src[1] == dst[1]) && (src[2] == dst[2]) && (src[3] == dst[3])) return;
 			}
 		}
 	}
     	format(r, i->u.MOVE.assem, i->u.MOVE.dst, i->u.MOVE.src, NULL, m);
-    	fprintf(out, "%s\n", r);
     	break;
     }
   }
+  if (0 == strncmp("movl", r, 4) && r[7] != 'e' && r[7] == r[13]) return;
+  fprintf(out, "%s\n", r);
 }
 
 /* c should be COL_color; temporarily it is not */
@@ -163,3 +168,4 @@ AS_proc AS_Proc(string p, AS_instrList b, string e)
  proc->prolog=p; proc->body=b; proc->epilog=e;
  return proc;
 }
+

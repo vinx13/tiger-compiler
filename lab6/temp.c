@@ -12,6 +12,7 @@
 #include "symbol.h"
 #include "temp.h"
 #include "table.h"
+#include "frame.h"
 
 struct Temp_temp_ {int num;};
 
@@ -116,3 +117,12 @@ void Temp_dumpMap(FILE *out, Temp_map m) {
      Temp_dumpMap(out,m->under);
   }
 }
+
+string tempName(Temp_temp t) {
+    static Temp_map m;
+    if (!m) {
+        m = Temp_layerMap(F_regTempMap(), Temp_name());
+    }
+    return Temp_look(m, t);
+}
+

@@ -1,4 +1,3 @@
-
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -11,6 +10,7 @@
 #include "env.h"
 #include "semant.h"
 #include "translate.h"
+#include "stack.h"
 
 #define isUniqueElmt(T_ELMT) isUniqueElmt_##T_ELMT
 #define _MAKE_UNIQUE_ELMT_FUNC(T_ELMT) \
@@ -28,6 +28,31 @@ _MAKE_UNIQUE_ELMT_FUNC(A_namety)
 _MAKE_UNIQUE_ELMT_FUNC(A_fundec)
 #define isUniqueFuncName isUniqueElmt(A_fundec)
 /*Lab4: Your implementation of lab4*/
+
+
+static Stack *loopStack; // loop stack
+
+Temp_label startLoop() {
+    Temp_label label = Temp_newlabel();
+    Stack_Push(loopStack, (void *)label);
+    return label;
+}
+
+void endLoop() {
+    Stack_Pop(loopStack);
+}
+
+void startCall() {
+    Stack_Push(loopStack, NULL);
+}
+
+void endCall() {
+    Stack_Pop(loopStack);
+}
+
+Temp_label currentLoop() {
+    return Stack_Top(loopStack);
+}
 
 //In Lab4, the first argument exp should always be **NULL**.
 expty expTy(Tr_exp exp, Ty_ty ty)
@@ -78,16 +103,16 @@ E_enventry S_checkedLookFunc(S_table venv, S_symbol s, int pos) {
     return entry;
 }
 
-int S_isEmpty(S_symbol s) {
+bool S_isEmpty(S_symbol s) {
     return !s || s == S_Symbol("");
 }
 
-int Ty_isSame(Ty_ty ty1, Ty_ty ty2) {
+bool Ty_isSame(Ty_ty ty1, Ty_ty ty2) {
     Ty_ty actual1 = actual_ty(ty1), actual2 = actual_ty(ty2);
     return actual1 == actual2;
 }
 
-int Ty_isCompatible(Ty_ty ty1, Ty_ty ty2) {
+bool Ty_isCompatible(Ty_ty ty1, Ty_ty ty2) {
     Ty_ty actual1 = actual_ty(ty1), actual2 = actual_ty(ty2);
     if (actual1 == actual2) return TRUE;
     if (actual1->kind == Ty_nil || actual2->kind == Ty_nil) {
@@ -108,14 +133,17 @@ int Ty_isCompatible(Ty_ty ty1, Ty_ty ty2) {
     return TRUE;
 }
 
-int Ty_isInt(Ty_ty ty) {
+bool Ty_isInt(Ty_ty ty) {
     return Ty_isSame(ty, Ty_Int());
 }
 
-int Ty_isVoid(Ty_ty ty) {
+bool Ty_isVoid(Ty_ty ty) {
     return Ty_isSame(ty, Ty_Void());
 }
 
+bool Ty_isString(Ty_ty ty) {
+    return ty->kind == Ty_string;
+}
 
 expty transSimpleVar(S_table venv, S_table tenv, Tr_level level, A_var v) {
     E_enventry x = S_look(venv,v->u.simple);
@@ -159,7 +187,6 @@ expty transFieldVar(S_table venv, S_table tenv, Tr_level level, A_var v) {
     }
 
     Tr_exp tr_exp = Tr_fieldVar(rec_meta.exp, offset);
-    //Tr_exp tr_exp = Tr_pointer(expty.exp, Tr_Ex(T_Const(offset)));
     return expTy(tr_exp, actual_ty(field->ty));
 }
 
@@ -218,8 +245,10 @@ expty transCallExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
     
     A_expList args = a->u.call.args;
     Ty_tyList ty_formals = func_entry->u.fun.formals;
-    
-    
+    Ty_ty ty_result = func_entry->u.fun.result; 
+
+    Tr_expList tr_args = Tr_ExpList(NULL, NULL), cur = tr_args;
+
     while (ty_formals && args) { 
         A_exp arg = args->head;
         Ty_ty ty_formal = ty_formals->head;
@@ -228,6 +257,7 @@ expty transCallExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
             EM_error(arg->pos, "para type mismatch");
         }
         ty_formals = ty_formals->tail;
+        cur = cur->tail = Tr_ExpList(arg_meta.exp, NULL);
         args = args->tail;
     }
         
@@ -235,7 +265,14 @@ expty transCallExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
             EM_error(a->pos, "too many params in function %s", S_name(a->u.call.func));
     }
 
-    return expTy(Tr_Nop()/*FIXME*/, func_entry->u.fun.result);
+    Tr_expList old = tr_args; tr_args = tr_args->tail; free(old);
+
+    startCall();
+    Tr_exp tr_exp = Tr_callExp(func_entry->u.fun.label, tr_args, func_entry->u.fun.level, level);
+    
+    endCall();
+
+    return expTy(tr_exp, func_entry->u.fun.result);
 }
 
 expty transOpExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
@@ -253,8 +290,10 @@ expty transOpExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
     } else { // cmp ops
         if (!Ty_isCompatible(left_meta.ty, right_meta.ty)) {
             EM_error(a->pos, "same type required");
-       //exit(0); 
             return expTy(NULL, Ty_Int());
+        } 
+        if (Ty_isString(left_meta.ty)) {
+            return expTy(Tr_stringCompare(oper, left_meta.exp, right_meta.exp), Ty_Int());
         }
     }
 
@@ -301,8 +340,7 @@ expty transRecordExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
             EM_error(a->pos, "incompatible field type");
             return expTy(NULL, Ty_Record(NULL));
         }
-        tr_expListTail->tail = Tr_ExpList(exp_meta.exp, NULL);
-        tr_expListTail = tr_expListTail->tail;
+        tr_expListTail = tr_expListTail->tail = Tr_ExpList(exp_meta.exp, NULL);
         ++nfields;
         ty_fields = ty_fields->tail;
         efields = efields->tail;
@@ -313,7 +351,7 @@ expty transRecordExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
         return expTy(NULL, Ty_Record(NULL));
     }
     
-    tr_expListTail = tr_expListTail->tail;
+    tr_expList = tr_expList->tail;
     Tr_exp tr_exp = Tr_recordExp(tr_expList);
     return expTy(tr_exp, ty_original);
 }
@@ -334,8 +372,8 @@ expty transSeqExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
         seqResult.ty = result.ty;
     } while ((exps = exps->tail));
 
-    // seqResult.ty = Ty_Void();
-    seqResult.exp = Tr_seqExp(tr_expList->tail);
+    bool hasReturnValue = !Ty_isVoid(seqResult.ty);
+    seqResult.exp = Tr_seqExp(tr_expList->tail, hasReturnValue);
 
     return seqResult;
 }
@@ -356,7 +394,6 @@ expty transAssignExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
 
     Tr_exp tr_exp = Tr_assignExp(var_meta.exp, exp_meta.exp);
     return expTy(tr_exp, Ty_Void());
-    //return expTy(tr_exp, var_meta.ty);
 }
 
 expty transIfExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
@@ -379,14 +416,17 @@ expty transIfExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
 }
 
 expty transWhileExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
-   expty cond_meta = transExp(venv, tenv, level, a->u.whilee.test), 
-         body_meta= transExp(venv, tenv, level, a->u.whilee.body);
+   expty cond_meta = transExp(venv, tenv, level, a->u.whilee.test);
+   Temp_label done = startLoop();
+   expty body_meta= transExp(venv, tenv, level, a->u.whilee.body);
 
    if (body_meta.ty->kind != Ty_void) {
        EM_error(a->pos, "while body must produce no value");
    }
 
-   Tr_exp tr_exp = Tr_whileExp(cond_meta.exp, body_meta.exp);
+   Tr_exp tr_exp = Tr_whileExp(cond_meta.exp, body_meta.exp, done);
+   endLoop();
+
    return expTy(tr_exp, Ty_Void());
 }
 
@@ -399,36 +439,47 @@ expty transForExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
         EM_error(a->u.forr.lo->pos, "for exp's range type is not integer");
     }
 
-    Tr_access access = Tr_allocLocal(level, FALSE);
+    Temp_label done = startLoop();
+    Tr_access access = Tr_allocLocal(level, a->u.forr.escape);
     S_enter(venv, a->u.forr.var, E_ROVarEntry(access, Ty_Int()));
     
     expty body_meta = transExp(venv, tenv, level, a->u.forr.body);
-    
-    Tr_exp tr_exp = Tr_forExp(Tr_simpleVar(access, level), lo_meta.exp, hi_meta.exp, body_meta.exp);
 
+    Tr_exp tr_exp = Tr_forExp(Tr_simpleVar(access, level), lo_meta.exp, hi_meta.exp, body_meta.exp, done);
+
+    endLoop();
     S_endScope(venv);
 
     return expTy(tr_exp, Ty_Void());
 }
 
 expty transBreakExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
-    // TODO
-    return expTy(NULL, Ty_Void());
+    Temp_label done = currentLoop();
+    if (!done) {
+        EM_error(a->pos, "break outside loop");
+        return expTy(Tr_Nop(), Ty_Void()); 
+    }
+    return expTy(Tr_breakExp(done), Ty_Void());
 }
 
 expty transLetExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
     A_decList decs = a->u.let.decs;
+    Tr_expList tr_decs = Tr_ExpList(NULL, NULL), tr_decs_cur = tr_decs;
 
     do {
         A_dec dec = decs->head;
-        transDec(venv, tenv, level, dec); 
+        tr_decs_cur = tr_decs_cur->tail = Tr_ExpList(transDec(venv, tenv, level, dec), NULL);
+
     } while ((decs = decs->tail));
+
+    tr_decs = tr_decs->tail;
 
     S_beginScope(venv);
     S_beginScope(tenv);
 
     expty result = transExp(venv, tenv, level, a->u.let.body);
-    
+    result.exp = Tr_letExp(tr_decs, result.exp);
+
     S_endScope(venv);
     S_endScope(tenv);
     
@@ -455,7 +506,8 @@ expty transArrayExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
         EM_error(a->u.array.init->pos, "type mismatch");
     }
 
-    return expTy(Tr_Nop(), ty_array);
+    Tr_exp tr_exp = Tr_arrayExp(size_meta.exp, init_meta.exp);
+    return expTy(tr_exp, ty_array);
 }
 
 expty transExp(S_table venv, S_table tenv, Tr_level level, A_exp a) {
@@ -514,7 +566,7 @@ Tr_exp transVarDec(S_table venv, S_table tenv, Tr_level level, A_dec d) {
         return NULL;
     }
 
-    Tr_access tr_access = Tr_allocLocal(level, TRUE/* FIXME check escape */); 
+    Tr_access tr_access = Tr_allocLocal(level, d->u.var.escape); 
     S_enter(venv, d->u.var.var, E_VarEntry(tr_access, ty_actual));
     
     Tr_exp tr_exp = Tr_assignExp(Tr_simpleVar(tr_access, level), init_meta.exp);
@@ -580,6 +632,7 @@ void transFunctionDec(S_table venv, S_table tenv, Tr_level level, A_dec d) {
             EM_error(f->pos, "two functions have the same name");
             continue;
         }
+        // Temp_label label = Temp_namedlabel(S_name(f->name));
         Temp_label label = Temp_newlabel();
         Tr_level func_level = Tr_newLevel(level, label, makeFormalEscapeList(f->params) ); 
         S_enter(venv,f->name,E_FunEntry(func_level, label, ty_formals, ty_result));
@@ -615,7 +668,7 @@ void transFunctionDec(S_table venv, S_table tenv, Tr_level level, A_dec d) {
             EM_error(f->body->pos, "inconsistent return type");
         }
 
-        Tr_procEntryExit(level, body_meta.exp, tr_formals);
+        Tr_procEntryExit(func_level, body_meta.exp, tr_formals, Ty_isVoid(body_meta.ty));
 
         S_endScope(tenv);
         S_endScope(venv);
@@ -726,11 +779,14 @@ Ty_ty transTy(S_table tenv, A_ty a) {
 
 
 F_fragList SEM_transProg (A_exp exp) {
+    loopStack = Stack_Init();
+
     S_table root_tenv = E_base_tenv(), root_venv = E_base_venv();
     
     Tr_exp body = transExp(root_venv, root_tenv, Tr_outermost(), exp).exp;
-    Tr_procEntryExit(Tr_outermost(), body, NULL);
+    Tr_procEntryExit(Tr_outermost(), body, NULL, TRUE);
     
+    Stack_Destroy(loopStack);
     return Tr_getResult();
 }
 

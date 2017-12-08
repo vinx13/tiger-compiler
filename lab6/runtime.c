@@ -47,12 +47,15 @@ void flush()
 struct string consts[256];
 struct string empty={0,""};
 
-int main()
+int main(int argc, char**argv)
 {int i;
  for(i=0;i<256;i++)
    {consts[i].length=1;
     consts[i].chars[0]=i;
    }
+ if (argc == 2) {
+     freopen(argv[1], "r", stdin);
+ }
  return tigermain(0 /* static link */);
 }
 
@@ -72,6 +75,10 @@ struct string *chr(int i)
 int size(struct string *s)
 { 
  return s->length;
+}
+
+int wrap_strcmp(struct string *a, struct string *b) {
+    return strcmp(a->chars, b->chars);
 }
 
 struct string *substring(struct string *s, int first, int n)

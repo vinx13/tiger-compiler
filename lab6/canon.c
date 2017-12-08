@@ -45,7 +45,7 @@ static bool commute(T_stm x, T_exp y)
 struct stmExp {T_stm s; T_exp e;};
 
 static T_stm reorder(expRefList rlist) {
-   if (!rlist) return T_Exp(T_Const(0)); /* nop */
+   if (!rlist) return T_Exp(T_Const(0));//T_Nop(); /* nop */
    else if ((*rlist->head)->kind==T_CALL) {
       Temp_temp t = Temp_newtemp();
       *rlist->head = T_Eseq(T_Move(T_Temp(t),*rlist->head),T_Temp(t));
